@@ -11,7 +11,8 @@ print("UDP Server started !")
 while True:
     data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
     print("LastUpdated :::::: received message: ", data.decode('utf8'), " from " , addr)
-    print("LASSSSRT:")
+    print("Change")
     currentTime = " " + time.ctime(time.time()) + "\r\n"
     data = data + currentTime.encode('ascii')
     sock.sendto(data,addr)
+~                                
