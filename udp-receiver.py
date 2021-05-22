@@ -9,7 +9,7 @@ sock.bind((UDP_IP, UDP_PORT))
 
 print("UDP Server started !")
 while True:
-    data, addr = socket.recvfrom(1024) # buffer size is 1024 bytes
+    data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
     print("LastUpdated :::::: received message: ", data.decode('utf8'), " from " , addr)
     print("ERROR")
     currentTime = " " + time.ctime(time.time()) + "\r\n"
