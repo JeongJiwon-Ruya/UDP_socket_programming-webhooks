@@ -7,7 +7,7 @@ import time
 
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    port_num = sys.argv[1]
+    port_num = 5001
     s.bind(('', int(port_num)))
     print("server socket created.")
 except socket.error:
