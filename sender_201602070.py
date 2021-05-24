@@ -101,7 +101,9 @@ def sender_send(file_name):
     file_size = os.path.getsize(file_name)
     print("File Size :",file_size)
     check = math.ceil(file_size/984)
-    s.sendto(str(check).encode(), client_addr)####
+    checksum_bytes = checksum(str(check).encode())
+    check_count = checksum_bytes + str(check)
+    s.sendto(check_count.encode(), client_addr)####
     
     for i in range(1,check+1):
         chunk_file = read_file.read(984)

@@ -49,7 +49,6 @@ def checksum(data):
         print(checksum)
 
 
-#file_name = input()
 rec_argv = sys.argv
 if len(rec_argv) > 3:
     print("over input")
@@ -66,9 +65,6 @@ except socket.error:
     print("failed to create socket")
     sys.exit()
 
-#host = "localhost"#
-#port = 8000#
-
 msg_to_send = input("enter a command: \n1.receive [file_name]\n2.exit\n")
 s.sendto(msg_to_send.encode(), (ip_addr, int(port_num))) 
 msg_cmd, addr = s.recvfrom(4096)##
@@ -80,7 +76,8 @@ newfile = "copy_"+msg_to_send.split()[1]
 
 write_file = open(os.getcwd()+"/"+newfile,'wb')
 msg_size, addr = s.recvfrom(4096)####
-msg_size = int(msg_size.decode())
+checksum(msg_size)
+msg_size = int((msg_size.decode())[40:])
 
 for i in range(1,msg_size+1):
     chunk_file, addr = s.recvfrom(4096)
