@@ -9,46 +9,6 @@ def check_md5_hash(path):
     md5_hash = hashlib.md5(data).hexdigest()
     return md5_hash
 
-def checksum(data):
-
-    data_d = data.decode()
-    checksum_input = data_d[36:40]
-    data_payload = data_d[40:]
-    head = data_d[:36]
-    data_ = head + "0000" + data_payload
-    data_ = data_.encode()
-
-    tsum = ""
-    for j in range(0,len(data),2):
-        x = format(data_[j],'x')
-        if len(data_)%2 == 0:
-            y = format(data_[j+1],'x')
-        else:
-            y = format(0,'x')
-        z = x+y
-        if tsum == "":
-            tsum = format(int(z,16), 'x')
-        else :
-            tsum = format(int(tsum,16) + int(z,16), 'x')
-        if len(tsum) > 4 :
-            tsum = format(int(tsum[0], 16) + int(tsum[1:], 16), 'x')
-
-    before = (bin(int(tsum,16))[2:]).zfill(16)
-    after = ""
-    for k in range(len(before)):
-        if before[k] == "0":
-            after = after+"1"
-        else :
-            after = after+ "0"
-    checksum = format(int(after,2), 'x').zfill(4)
-    if checksum != checksum_input:
-        print("Not matched")
-        sys.exit()
-    else:
-        print("checksum matched")
-        print(checksum)
-
-
 #file_name = input()
 rec_argv = sys.argv
 if len(rec_argv) > 3:
@@ -82,14 +42,11 @@ write_file = open(os.getcwd()+"/"+newfile,'wb')
 msg_size, addr = s.recvfrom(4096)####
 msg_size = int(msg_size.decode())
 
-for i in range(1,msg_size+1):
+while msg_size != 0:
     chunk_file, addr = s.recvfrom(4096)
-    print("#############################")
-    print("Received packet number:", i)
-    checksum(chunk_file)
-    write_file.write(chunk_file[40:])
-    print("#############################\n")
-
+    write_file.write(chunk_file)
+    print("Received packet number: ", msg_size)
+    msg_size -= 1 
 
 write_file.close()
 
