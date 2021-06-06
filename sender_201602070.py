@@ -130,7 +130,6 @@ def sender_send(file_name = "speech_script.txt"):
         sendfile = sACK + sendfile
             
         while True:
-            # sendfile = sACK + checksum_bytes + sendfile
             if i == 5 and test_1:
                 test_1 = False
                 s.sendto(sendfile.encode('utf-8'), (client_ip,5002))
@@ -155,7 +154,6 @@ def sender_send(file_name = "speech_script.txt"):
             except socket.timeout:
                 print("Lost ACK, Send same data again.\n")
                 continue
-            # print((checksum_bytes)[35:41])
             
 
         time.sleep(0.1)

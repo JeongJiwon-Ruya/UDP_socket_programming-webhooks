@@ -9,6 +9,8 @@ try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     port_num = 5001
     s.bind(('', int(port_num)))
+    s.setblocking(0)
+    s.settimeout(10)
     print("server socket created.")
 except socket.error:
     print("failed to create socket")
@@ -89,8 +91,12 @@ def checksum(data):
 
     return headers_
 
+zero = "0"
+one = "1"
+nak = "NAK"
+rACK = ""
 
-def sender_send(file_name):
+def sender_send(file_name = "speech_script.txt"):
     s.sendto("valid list command.".encode(), client_addr)##
     
     if not os.path.isfile(file_name):
@@ -100,22 +106,58 @@ def sender_send(file_name):
     read_file = open(file_name, 'rb')
     file_size = os.path.getsize(file_name)
     print("File Size :",file_size)
-    check = math.ceil(file_size/984)
-    checksum_bytes = checksum(check.encode())
-    check_count = checksum_bytes + str(check)
-    s.sendto(check_count.encode(), client_addr)####
+    check = math.ceil(file_size/981)
+    # checksum_bytes = checksum(str(check).encode())
+    # check_count = checksum_bytes + str(check)
+    s.sendto(str(check).encode(), client_addr)####
     
-    for i in range(1,check+1):
-        chunk_file = read_file.read(984)
-        checksum_bytes = checksum(chunk_file)
+
+    test_1 = False #  for ERROR 1
+
+    i = 1
+    while i <= check:
+        chunk_file = read_file.read(981)
+        # checksum_bytes = checksum(chunk_file)
         sendfile = chunk_file.decode('utf-8')
-        sendfile = checksum_bytes + sendfile
-        s.sendto(sendfile.encode('utf-8'), client_addr)
-        print("### final checksum ###")
-        print((checksum_bytes)[36:40])
-        print("packet number ", i)
-        print("data sending now:")
-        print("######################\n")
+        
+        if i == 1 :
+            sACK = zero
+        elif rACK == zero:
+            sACK = zero
+        elif rACK == one:
+            sACK = one 
+
+        sendfile = sACK + sendfile
+            
+        while True:
+            # sendfile = sACK + checksum_bytes + sendfile
+            if i == 5 and test_1:
+                test_1 = False
+                s.sendto(sendfile.encode('utf-8'), (client_ip,5002))
+            else :
+                s.sendto(sendfile.encode('utf-8'), client_addr)
+            print("### final checksum ###")
+            print("packet number ", i)
+            print("sending index :", sACK)
+            try:
+                rACK, _ = s.recvfrom(4096)
+                rACK = rACK.decode()
+                if rACK == nak:
+                    continue
+
+                elif rACK != sACK :
+                    sACK = rACK
+                    print("receive index :", rACK)
+                    print("data sending now:")
+                    print("######################\n")
+                    i += 1
+                    break
+            except socket.timeout:
+                print("Lost ACK, Send same data again.\n")
+                continue
+            # print((checksum_bytes)[35:41])
+            
+
         time.sleep(0.1)
 
     md5_hash = check_md5(file_name)
@@ -123,7 +165,8 @@ def sender_send(file_name):
 
 if __name__ == "__main__":
     try:
-        data, client_addr = s.recvfrom(4096)
+        data, (client_ip, client_port) = s.recvfrom(4096)
+        client_addr = (client_ip,client_port)
     except ConnectionResetError:
         print("error. port number not matching.")
         sys.exit()
@@ -131,7 +174,5 @@ if __name__ == "__main__":
     text = data.decode('utf8')
     handler = text.split()
 
-    if handler[0] == 'receive':
-        sender_send(handler[1])
-    elif handler[0] == 'exit':
-        sys.exit()
+    if handler[0] == '201602070':
+        sender_send("speech_script.txt")
