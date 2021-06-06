@@ -11,7 +11,7 @@ def check_md5_hash(path):
 
 def checksum(data):
 
-    data_d = data.decode()
+    data_d = data.decode()[1:]
     checksum_input = data_d[36:40]
     data_payload = data_d[40:]
     head = data_d[:36]
@@ -59,34 +59,70 @@ port_num = rec_argv[2]
 try:
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.setblocking(0)
-    s.settimeout(15)
+    s.settimeout(10)
 
 except socket.error:
     print("failed to create socket")
     sys.exit()
 
-msg_to_send = input("enter a command: \n1.receive [file_name]\n2.exit\n")
+zero = "0"
+one = "1"
+nak = "NAK"
+
+msg_to_send = input("receive socket created\nenter your student number:\n")
 s.sendto(msg_to_send.encode(), (ip_addr, int(port_num))) 
 msg_cmd, addr = s.recvfrom(4096)##
 print(msg_cmd.decode())
 msg_fileExist, addr = s.recvfrom(4096)###
 print(msg_fileExist.decode())
 
-newfile = "copy_"+msg_to_send.split()[1]
+newfile = "copy_"+msg_to_send.split()[0]
 
 write_file = open(os.getcwd()+"/"+newfile,'wb')
 msg_size, addr = s.recvfrom(4096)####
-checksum(msg_size)
-msg_size = int((msg_size.decode())[40:])
+# checksum(msg_size)
+# msg_size = int((msg_size.decode())[41:])
+msg_size = int(msg_size.decode())
 
-for i in range(1,msg_size+1):
-    chunk_file, addr = s.recvfrom(4096)
-    print("#############################")
-    print("Received packet number:", i)
-    checksum(chunk_file)
-    write_file.write(chunk_file[40:])
-    print("#############################\n")
+i = 1
+pastRecv = ""
+test_2 = False # for ERROR 2
 
+while i <= msg_size:
+    try:
+        chunk_file, addr = s.recvfrom(4096)
+
+
+        print("#############################")
+        print("Received frame number:", i)
+        # checksum(chunk_file)
+
+        recvACK = chunk_file.decode()[0:1]
+        if pastRecv != chunk_file :
+            write_file.write(chunk_file[1:])
+        else :
+            i -=1
+            print(" Send ACK only ")
+ 
+        if i == 8 and test_2:
+            test_2 = False
+            s.sendto(one.encode(), (ip_addr, 8008))
+        elif recvACK == zero :
+            print("receive index :", recvACK)
+            s.sendto(one.encode(), (ip_addr, int(port_num)))
+            print("sending index :", one)
+        elif recvACK == one :
+            print("receive index :", recvACK)
+            s.sendto(zero.encode(), (ip_addr, int(port_num)))
+            print("sending index :", zero)
+        
+        print("#############################\n")
+        i += 1
+        pastRecv = chunk_file
+
+    except socket.timeout:
+        print("====+++SEND NAK+++====\n")
+        s.sendto(nak.encode(), (ip_addr, int(port_num)))
 
 write_file.close()
 
